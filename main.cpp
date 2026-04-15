@@ -29,7 +29,7 @@ struct Line {
     string label, opcode, operand;
 };
 
-// Utility: split line
+// split line (needs work) 
 Line parseLine(string line) {
     stringstream ss(line);
     Line l;
