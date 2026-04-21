@@ -1,0 +1,11 @@
+. Simple arithmetic program
+CALC     START   0
+         LDA     NUM1
+         ADD     NUM2
+         STA     RESULT
+         RSUB
+
+NUM1     WORD    5
+NUM2     WORD    10
+RESULT   RESW    1
+         END     CALC

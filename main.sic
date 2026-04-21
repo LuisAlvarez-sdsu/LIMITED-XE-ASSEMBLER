@@ -1,0 +1,11 @@
+. Program using literals and format 4
+MAIN     START   0
+         LDA     =C'HI'
+         +JSUB   SUBRTN
+         RSUB
+
+SUBRTN   LDA     #1
+         RSUB
+
+         LTORG
+         END     MAIN

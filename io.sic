@@ -1,0 +1,16 @@
+. Simple I/O example
+IOPROG   START   0
+         LDX     #0
+         LDA     #0
+LOOP     TD      INPUT
+         JEQ     LOOP
+         RD      INPUT
+         WD      OUTPUT
+         TIX     COUNT
+         JLT     LOOP
+         RSUB
+
+COUNT    RESW    1
+INPUT    BYTE    X'F1'
+OUTPUT   BYTE    X'05'
+         END     IOPROG
