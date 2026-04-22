@@ -2,318 +2,233 @@
 ## Limited XE Assembler (`lxe`)
 
 **Team Members**  
-- [Full Name], RedID: [RedID]
-- [Full Name], RedID: [RedID] 
+- [Luis Alvarez], RedID: [RedID]
+- [828116114], RedID: [828116114] 
 
 ---
 
 ## Overview
 
-This project implements a limited two-pass assembler for the XE variant of the SIC/XE machine architecture.  
-The assembler reads SIC/XE assembly source files and generates:
+This project implements a limited two-pass assembler for the XE variant of the SIC/XE architecture.
 
-- a **listing file** with extension `.l`
-- a **symbol table file** with extension `.st`
+The assembler reads one or more SIC/XE assembly source files from the command line and generates, for each input file:
 
-The program does **not** generate object files.
+a listing file with extension .l
+a symbol table file with extension .st
+
+The program performs the standard two-pass assembler process:
+
+Pass 1
+parses the source program
+assigns addresses using a location counter (LOCCTR)
+builds the symbol table (SYMTAB)
+detects and stores literals in the literal table (LITTAB)
+Pass 2
+resolves symbols and literals
+generates object code for supported instructions and directives
+writes formatted listing output
+
+This project does not generate an object program file, as specified by the assignment.
 
 The executable name is:
+lxe
 
-```bash
+Features Implemented
+The assembler supports the following major features:
+
+Multiple input source files from the command line
+Two-pass assembly design
+Symbol table generation (SYMTAB)
+Literal table support (LITTAB)
+Literal placement using LTORG and END
+Listing file generation (.l)
+Symbol table file generation (.st)
+SIC/XE instruction support for implemented format 2, 3, and 4 instructions
+Addressing mode handling for:
+immediate addressing (#)
+indirect addressing (@)
+simple addressing
+indexed addressing (,X)
+Extended format instructions using +opcode
+Support for assembler directives:
+START
+END
+WORD
+BYTE
+RESW
+RESB
+BASE
+LTORG
+Input
+
+The program accepts one or more SIC/XE source files as command-line arguments.
+
+Example:
+
+./lxe io.sic calc.sic main.sic
+
+If no input files are provided, the program prints an error message and terminates.
+
+Output
+
+For each input source file, the assembler generates:
+
+filename.l
+A listing file containing addresses, labels, opcodes, operands, and generated object code
+filename.st
+A symbol table file containing symbols, assigned addresses, and literal information
+
+Example:
+
+Input:
+
+./lxe calc.sic
+
+Output files:
+
+calc.l
+calc.st
+File Description
+Source Files
+lxe.cpp - main program logic, Pass 1, Pass 2, and output generation
+lxe.h - structure definitions, global tables, and function declarations
+Build File
+Makefile - compiles the project and creates the executable lxe
+Test Files
+calc.sic - tests arithmetic instructions and symbol handling
+io.sic - tests loops, I/O instructions, byte constants, and branching
+main.sic - tests literals, LTORG, and format 4 instructions
+Output Files
+*.l - listing files
+*.st - symbol table files
+Data Structures Used
+
+The assembler uses the following primary data structures:
+
+Line
+
+Stores one parsed line of source code, including:
+
+address
+label
+opcode
+operand
+Literal
+
+Stores one literal, including:
+
+literal name
+assigned address
+length
+SYMTAB
+
+Implemented as:
+
+map<string, int>
+
+Stores label-to-address mappings.
+
+LITTAB
+
+Implemented as:
+
+vector<Literal>
+
+Stores literals encountered during Pass 1.
+
+OPTAB
+
+Stores format 3/4 opcode values.
+
+OPTAB2
+
+Stores format 2 opcode values.
+
+REG
+
+Stores register encoding values for format 2 instructions.
+
+Program Design
+
+The assembler is organized into the following major functions:
+
+parseLine()
+Parses a source line into label, opcode, and operand fields
+pass1()
+Builds the symbol table, assigns addresses, and collects literals
+pass2()
+Generates object code and listing output
+addLiteral()
+Adds literals to the literal table
+assignLiterals()
+Assigns addresses to pending literals during LTORG or END
+literalLength()
+Computes the byte length of a literal
+literalObjectCode()
+Converts a literal into hexadecimal object code
+writeSymtab()
+Writes the symbol table and literal table to the .st file
+How to Compile
+
+Use make to compile the project:
+
+make
+
+This creates the executable:
 
 lxe
 
-Moving forward the next steps we should take
-- Add the support for opcode format 4, #operand, @operand, X
-- add the format 2 instructions, register table, BASE/NOBASE
-- implement true format 3 logic and do the pc placement, base relative displacement, range checking
-- improving the lisitng file with line numbers and error messages on same line
-
-I think we should follow this struct Line {
-    int lineNumber;
-    int address;
-    string raw;
-    string label;
-    string opcode;
-    string operand;
-    string objectCode;
-    string error;
-    bool isCommentOnly;
-};
-
-and use:
-
-parseLine()
-pass1()
-pass2()
-assembleFormat2()
-assembleFormat34()
-
-
-
-OUTLINEEEE
-lxe-project/
-├── Makefile
-├── README.md
-├── main.cpp
-├── assembler.h
-├── assembler.cpp
-├── util.h
-├── util.cpp
-└── test/
-    └── .gitkeep
-
-#include <iostream>
-#include "assembler.h"
-
-using namespace std;
-
-int main(int argc, char* argv[]) {
-
-    // TODO: check for no input files
-    if (argc < 2) {
-        cout << "Usage: ./lxe file1.sic file2.sic\n";
-        return 1;
-    }
-
-    // TODO: process each file
-    for (int i = 1; i < argc; i++) {
-        cout << "Processing: " << argv[i] << endl;
-
-        assembleFile(argv[i]);  // call your main assembler function
-    }
-
-    return 0;
-}
-
-#ifndef ASSEMBLER_H
-#define ASSEMBLER_H
-
-#include <string>
-#include <vector>
-#include <map>
+To remove generated files and rebuild:
 
-using namespace std;
+make clean
+make
+How to Run
 
-// Represents one line of source
-struct Line {
-    int lineNumber;
-    int address;
+Run the assembler with one or more source files:
 
-    string label;
-    string opcode;
-    string operand;
-    string raw;
+./lxe file1.sic file2.sic
 
-    string objectCode;
-    string error;
-};
+Example:
 
-//  MAIN FUNCTION 
-void assembleFile(string filename);
+./lxe io.sic calc.sic main.sic
+Example Test Cases
+1. Arithmetic Program
 
-//  PASSES 
-void pass1(string filename,
-           vector<Line>& lines,
-           map<string,int>& SYMTAB,
-           int& startAddr,
-           int& programLength);
+calc.sic
 
-void pass2(vector<Line>& lines,
-           map<string,int>& SYMTAB);
+tests LDA, ADD, STA, RSUB
+tests symbol resolution
+tests WORD and RESW
+2. I/O Program
 
-// OUTPUT 
-void writeListing(string filename, vector<Line>& lines);
-void writeSymtab(string filename, map<string,int>& SYMTAB);
+io.sic
 
-//  HELPERS 
-Line parseLine(string line, int lineNumber);
-bool isDirective(string op);
-int byteLength(string operand);
+tests looping and branching
+tests TD, RD, WD, TIX, JLT
+tests byte constants and labels
+3. Literal / Format 4 Program
 
-#endif
+main.sic
 
-#include "assembler.h"
-#include "util.h"
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <iomanip>
+tests literals such as =C'HI'
+tests LTORG
+tests format 4 instruction handling with +JSUB
+Limitations
 
-using namespace std;
+This assembler is limited to the project requirements and currently has the following limitations:
 
-// 
-// Main control function
-// 
-void assembleFile(string filename) {
+EQU and ORG are not implemented
+Object program files are not generated
+Opcode support is limited to the instructions implemented in the project
+Error handling is partial for some invalid input cases
+Duplicate symbol detection and undefined symbol handling may be limited depending on the input
+Error Handling
 
-    vector<Line> lines;
-    map<string,int> SYMTAB;
+The program currently handles the following cases:
 
-    int startAddr = 0;
-    int programLength = 0;
+no input files provided
+missing or invalid source files
+empty or invalid files
 
-    // TODO: run pass 1
-    pass1(filename, lines, SYMTAB, startAddr, programLength);
-
-    // TODO: run pass 2
-    pass2(lines, SYMTAB);
-
-    // TODO: write output files
-    writeListing(filename, lines);
-    writeSymtab(filename, SYMTAB);
-}
-
-// 
-// PASS 1
-// 
-void pass1(string filename,
-           vector<Line>& lines,
-           map<string,int>& SYMTAB,
-           int& startAddr,
-           int& programLength) {
-
-    ifstream file(filename);
-
-    // TODO: check file opened
-
-    string raw;
-    int locctr = 0;
-    int lineNumber = 0;
-
-    while (getline(file, raw)) {
-
-        lineNumber++;
-
-        // TODO: parse line
-        Line l = parseLine(raw, lineNumber);
-
-        // TODO: skip comments
-
-        // TODO: handle START
-
-        // TODO: assign address
-
-        // TODO: add label to SYMTAB
-
-        // TODO: update LOCCTR based on opcode/directive
-
-        lines.push_back(l);
-    }
-
-    // TODO: compute program length
-}
-
-// 
-// PASS 2
-// 
-void pass2(vector<Line>& lines,
-           map<string,int>& SYMTAB) {
-
-    // TODO: loop through lines
-
-    // TODO: generate object code
-
-    // TODO: handle WORD, BYTE
-
-    // TODO: handle instructions
-
-    // TODO: handle errors
-}
-
-// 
-// OUTPUT FILES
-// 
-void writeListing(string filename, vector<Line>& lines) {
-
-    // TODO: open .l file
-
-    // TODO: print each line with:
-    // address, label, opcode, operand, object code, errors
-}
-
-void writeSymtab(string filename, map<string,int>& SYMTAB) {
-
-    // TODO: open .st file
-
-    // TODO: print symbol and address
-}
-
-// 
-// PARSER
-// 
-Line parseLine(string line, int lineNumber) {
-
-    Line l;
-    l.raw = line;
-    l.lineNumber = lineNumber;
-
-    // TODO:
-    // - detect comment lines
-    // - detect label vs no label
-    // - split into label/opcode/operand
-
-    return l;
-}
-
-// 
-// HELPERS
-// 
-bool isDirective(string op) {
-
-    // TODO: return true if:
-    // START, END, WORD, RESW, RESB, BYTE, BASE, NOBASE
-
-    return false;
-}
-
-int byteLength(string operand) {
-
-    // TODO:
-    // handle C'...' and X'...'
-    // return number of bytes
-
-    return 0;
-}
-
-#ifndef UTIL_H
-#define UTIL_H
-
-#include <string>
-using namespace std;
-
-string trim(string s);
-string toUpper(string s);
-bool isNumber(string s);
-string intToHex(int value, int width);
-
-#endif
-
-#include "util.h"
-#include <algorithm>
-#include <sstream>
-#include <iomanip>
-#include <cctype>
-
-using namespace std;
-
-string trim(string s) {
-    // TODO: remove spaces from start and end
-    return s;
-}
-
-string toUpper(string s) {
-    // TODO: convert string to uppercase
-    return s;
-}
-
-bool isNumber(string s) {
-    // TODO: check if string is a number
-    return false;
-}
-
-string intToHex(int value, int width) {
-    // TODO: convert integer to hex string
-    return "";
-}
+The assembler attempts to continue processing when possible so that output files can still be generated for valid portions of the input.
 
