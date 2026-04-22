@@ -3,7 +3,7 @@
 
 **Team Members**  
 - [Luis Alvarez], RedID: [RedID]
-- [828116114], RedID: [828116114] 
+- [Jazmin Gallegos], RedID: [828116114] 
 
 ---
 
